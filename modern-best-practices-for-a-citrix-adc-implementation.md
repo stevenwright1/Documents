@@ -77,7 +77,7 @@ If you have purchased a Citrix ADC appliance, you should ensure:
 
 1.  The Citrix ADCs are deployed in locations separate enough to meet your high availaiblity requirements.
 
-2.  The ADC's redundant power supplies units on each ADC (if you have purchased such) are connected to separate electrical supplies.
+2.  The redundant Power Supply Units on each ADC (if you have purchased such) are connected to separate electrical supplies.
 
 3.  The Lights Out Management card (if you have purchased appliances with such a card) are configured.
 
