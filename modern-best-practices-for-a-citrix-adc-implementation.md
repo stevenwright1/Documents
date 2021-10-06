@@ -94,7 +94,7 @@ You can find more information on configuring Lights Out Management Cards here:
 \
 To ensure that data continues to flow during a cable, switch, or interface failure, you should connect your ADC to each network with redundant cables.
 
-To combine the interfaces connecting each network a single link (known as a channel), you must configure link aggregation on your ADC. Ideally, you should use Link Aggregation Control Protocol (LACP) but, manual aggregated links are possible in the rare event that your network switches do not support LACP.
+To combine the interfaces connecting each network into a single link (known as a channel), you must configure link aggregation on your ADC. Ideally, you should use Link Aggregation Control Protocol (LACP) but, manual aggregated links are possible in the rare event that your network switches do not support LACP.
 
 Instructions for configuring Link Aggregation on your Citrix ADC can be found here:
 <https://docs.citrix.com/en-us/citrix-adc/13/networking/interfaces/configuring-link-aggregation.html>
@@ -106,7 +106,7 @@ In a virtualised or Cloud environment, your provider will likely have already co
 
 ### 2.  All redundant physical interfaces should be unmonitored for HA within System, Network, Interfaces.
 \
-As each network has redundant connections, it is not usually desirable that the ADC initiates an HA failover when a single link fails. Instead, the ADC should continue to provide business services without interruption by using the surviving link and only trigger a failover to the secondary ADC node if both links become unavailable.
+As each network has redundant connections, it is not usually desirable that the ADC initiates an HA failover when a single link fails. Instead, the ADC should continue to provide business services without interruption by using a surviving link and only trigger a failover to the secondary ADC node if all links become unavailable.
 
 To ensure that the ADC does not initiate an HA failover when a single physical interface comprising an aggregated redundant channel fails, you should mark the channel's component interfaces as unmonitored.
 
@@ -119,9 +119,9 @@ In a virtualised or Cloud environment, you will not have physical interfaces and
 
 ### 3.  All channels comprising redundant physical interfaces should be monitored for HA within System, Network, Channels.
 \
-The failure of all aggregated links connecting a particular network will cause the channel representing those links to enter a failed/DOWN state.
+The failure of all aggregated links connecting the ADC to a particular network will cause the channel representing those links to enter a failed/DOWN state.
 
-By ensuring that the Citrix ADC has HA monitoring enabled for the channel, we can ensure that the ADC will initiate an HA failover if all redundant links between the ADC and a network fail.
+By ensuring that the Citrix ADC has HA monitoring enabled for the channel, we ensure that the ADC will initiate an HA failover if all redundant links between the ADC and a network fail.
 
 To mark a channel as monitored, select System, Network, Channels. Then, select each channel and set the "HA Monitoring" radio button to "ON".
 
@@ -134,9 +134,9 @@ Each redundant channel ordinarily represents the aggregate physical links connec
 
 In a virtualised or Cloud environment, each interface likely represents aggregate physical links with your provider having completed the aggregation work for you.
 
-By default, the ADC considers all interfaces, channels, and IP addresses in VLAN 1 and treats these as the same logical network. As such, if you were to overlook VLAN configuration, you would find that each IP address assigned to the ADC was available from every directly-connected network.
+By default, the ADC considers all interfaces, channels, and IP addresses as being in VLAN 1 and treats these as the same logical network. As such, if you were to overlook VLAN configuration, you would find that each IP address assigned to the ADC was available from every directly-connected network.
 
-To prevent this behaviour, you should configure LANs on the ADC to represent your logic networks and appropriately isolate traffic.
+To prevent this behaviour, you should configure VLANs on the ADC to represent your logic networks and appropriately isolate traffic.
 
 You can find instructions to create VLANs here:
 <https://docs.citrix.com/en-us/citrix-adc/current-release/networking/interfaces/configuring-vlans.html>
@@ -156,7 +156,7 @@ You can find instructions for configuring an HA pair here:
 
 ### 6.  Create and bind one SNIP to every VLAN, ensuring that each SNIP is in the subnet of the connected network.
 \
-Citrix ADC will typically initiate communication from a Subnet IP (usually called a SNIP) with limited exceptions.
+Citrix ADC will initiate communication from a Subnet IP (usually called a SNIP) with limited exceptions.
 
 You must create one Subnet IP/SNIP for every directly connected logical network. As you have already isolated each network using VLANs, you must bind each SNIP to its respective VLAN. Please take care to ensure that no VLANs are missing a SNIP.
 
@@ -184,9 +184,9 @@ You can find instructions for configuring routes here:
 \
 Occasionally, it is impossible to configure a static route that allows for the behaviour you require.
 
-The most common example is an ADC with separate ingress, egress, and dedicated management networks, and management clients on the egress network.
+The most common example is an ADC with separate ingress, egress, and dedicated management networks, and with management clients on the egress network.
 
-Here, static rules would not be sufficient. Instead, you would require a Policy Based Route (PBR) to cause traffic from the ADC's management IP addresses to go via the management router and override the static routing table that would otherwise have sent the data to the egress router.
+Here, static rules would not be sufficient. Instead, you would require a Policy Based Route (PBR) to cause traffic from the ADC's management IP addresses to go via the management router and override the static routing table that would otherwise have sent data to the router in the egress network.
 
 You can find instructions for configuring Policy Based Routes here:
 <https://docs.citrix.com/en-us/citrix-adc/current-release/networking/ip-routing/configuring-policy-based-routes/configuring-policy-based-routes-pbrs-for-ipv4-traffic.html>
@@ -205,9 +205,9 @@ apply pbrs
 \
 Citrix ADC has a mode called Mac Based Forwarding (MBF) that causes it to ignore the routing table and instead send replies to the MAC address from which it received the traffic.
 
-MBF is of great use where you cannot define your routes. For example suppose, the ADC has multiple Internet connections and must reply only to using the Internet router through which traffic arrived. Here, MBF would cause the ADC to record the source MAC address of each connection and reply using the correct router.
+MBF is of great use where you cannot define your routes. For example, suppose the ADC has multiple Internet connections and must reply using the Internet router through which traffic arrived. Here, MBF would cause the ADC to record the source MAC address of each connection (the source MAC being that of the Internet router) and would use this as the destination MAC in its reply.
 
-However, having MBF override the routing table can make troubleshooting more complex. With MBF, you cannot understand traffic flows from the ADC's configuration file alone, and misconfigurations in the supporting network could remain undetected.
+However, having MBF override the routing table can make troubleshooting more complex. With MBF, you cannot understand traffic flows from the ADC's configuration file alone as MBF overrides the routing table, and traffic may not flow as you intended. The result is that MBF, while crucial to some implementations, can also lead to misconfigurations in the supporting network remaining undetected.
 
 To ensure that your routing table and PBRs are correct, you should disable Mac Based Forwarding and verify that each SNIP remains reachable or that you understand why it does not.
 
@@ -223,6 +223,8 @@ The command to enable MBF is
 enable ns mode mbf
 ```
 
+If you do not require MBF, you should leave it disabled.
+
 You can find more information of Mac Based Forwarding here:
 <https://support.citrix.com/article/CTX132952>
 
@@ -233,7 +235,7 @@ You can find more information of Mac Based Forwarding here:
 \
 The Citrix ADC's default SSL certificate is not trusted and will cause your web browser to display a warning message when accessing the ADC's management services.
 
-So that management users do not become accustomed to accepting warning messages and would detect a Man In The Middle Attack, Citrix recommends that you replace the default SSL certificate.
+So that management users do not become accustomed to accepting warning messages that would otherwise already them to a Man In The Middle Attack, Citrix recommends that you replace the default SSL certificate.
 
 You can find details of how to replace the management SSL certificate here:
 <https://support.citrix.com/article/CTX122521>
@@ -245,7 +247,7 @@ You can find details of how to replace the management SSL certificate here:
 &nbsp;
 ### 1.  Set the timezone and enable NTP.
 \
-Having accurate and easily understood timestamps in your log files is vital when troubleshooting or handling a security query.
+Having accurate and easily understood timestamps in your log files is vital when troubleshooting or handling a security issue.
 
 First, you should set the timezone to something that makes sense to you. For example, if you have any devices logging to a central syslog server and need to cross-reference data from each, you will likely want to use the same timezone as your existing servers.
 
