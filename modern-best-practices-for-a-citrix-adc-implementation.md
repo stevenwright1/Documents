@@ -238,7 +238,7 @@ You can find more information of Mac Based Forwarding here:
 \
 The Citrix ADC's default SSL certificate is not trusted and will cause your web browser to display a warning message when accessing the ADC's management services.
 
-So that management users do not become accustomed to accepting warning messages that would otherwise already them to a Man In The Middle Attack, Citrix recommends that you replace the default SSL certificate.
+So that management users do not become accustomed to accepting warning messages that would otherwise alert them to a Man In The Middle Attack, Citrix recommends that you replace the default SSL certificate.
 
 You can find details of how to replace the management SSL certificate here:
 <https://support.citrix.com/article/CTX122521>
@@ -518,11 +518,12 @@ You can find more details on configuring SNMP here:
 
 ### 14.  Set SNMP alarms and traps.
 \
-It is usually helpful for the ADC to raise alerts when high CPU or memory usage occurs and send these via SNMP trap configuration to your SNMP server. You can implement such configuration with the following commands:
+It is usually helpful for the ADC to raise alerts when high CPU or memory usage occurs and send these via SNMP trap configuration to your SNMP server. You may also wish to trigger alerts when HA failovers occur. You can implement such configuration with the following commands:
 
 ```
 set snmp alarm CPU-USAGE -state ENABLED -normalValue 35 -thresholdValue 80 -logging ENABLED -severity Informational
 set snmp alarm MEMORY -state ENABLED -normalValue 35 -thresholdValue 80 -logging ENABLED -severity Critical
+set snmp alarm HA-STATE-CHANGE -severity Critical
 
 add snmp trap generic SNMPTRAPDSTIP -communityName public
 ```
@@ -553,8 +554,9 @@ You can find more details about audit logging here:
 ### 16.  You should set a timeout and prompt for management sessions.
 \
 Citrix ADC 13.0 allows a default of 900 seconds (15 minutes) before disconnecting idle management sessions. On older firmware versions, you should ensure that you have configured an appropriate timeout.
+```
 set system parameter -timeout 900
-
+```
 As an administrator may have SSH sessions open to multiple ADCs simultaneously, it is helpful to change the ADC's CLI prompt to display their username, the ADC's hostname, and the HA state of the instance.
 
 ```
