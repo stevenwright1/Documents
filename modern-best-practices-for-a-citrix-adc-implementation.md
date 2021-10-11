@@ -2,21 +2,12 @@
 layout: doc
 h3InToc: true
 contributedBy: Steven Wright
-description: Tech Paper focused on the steps that a Citrix ADC administrator should follow to deploy a new instance with best practice settings.
-tz_title: Modern best practices for a new Citrix ADC implementation
+description: Tech Paper focused on the steps that a Citrix ADC administrator should follow to deploy a new ADC instance with best practice settings.
+tz_title: Tech Paper: Best practices for Citrix ADC Deployments
 ---
-# Modern best practices for Citrix ADC implementations
+# Tech Paper: Best practices for Citrix ADC Deployments
 
-6th October 2021
-\
-&nbsp;
-
-## Contact details
-Steven Wright\
-Email: steven@stevenwright.co.uk\
-Twitter: <https://twitter.com/stevenwrightuk>
-
-All feedback gratefully received.
+11th October 2021
 \
 &nbsp;
 
@@ -31,22 +22,22 @@ This draft Tech Paper aims to convey what someone skilled in ADC would configure
 &nbsp;
 
 ## Table of Contents
-- [Modern best practices for Citrix ADC implementations](#modern-best-practices-for-citrix-adc-implementations)
-  - [Contact details](#contact-details)
+- [Tech Paper: Best practices for Citrix ADC Deployments](#tech-paper-best-practices-for-citrix-adc-deployments)
   - [Overview](#overview)
   - [Table of Contents](#table-of-contents)
   - [Power and Lights Out management settings](#power-and-lights-out-management-settings)
   - [Physical network cabling, VLANs, and connectivity](#physical-network-cabling-vlans-and-connectivity)
     - [1. All physical interfaces connecting the Citrix ADC to your network(s) should be redundant.](#1-all-physical-interfaces-connecting-the-citrix-adc-to-your-networks-should-be-redundant)
-    - [2.  All redundant physical interfaces should be unmonitored for HA within System, Network, Interfaces.](#2--all-redundant-physical-interfaces-should-be-unmonitored-for-ha-within-system-network-interfaces)
-    - [3.  All channels comprising redundant physical interfaces should be monitored for HA within System, Network, Channels.](#3--all-channels-comprising-redundant-physical-interfaces-should-be-monitored-for-ha-within-system-network-channels)
-    - [4.  All channels are bound to a separate VLAN and, you have taken care that no untagged channels are accidentally still in VLAN 1.](#4--all-channels-are-bound-to-a-separate-vlan-and-you-have-taken-care-that-no-untagged-channels-are-accidentally-still-in-vlan-1)
-    - [5.  Create an HA pair between your ADCs within System, High Availability.](#5--create-an-ha-pair-between-your-adcs-within-system-high-availability)
-    - [6.  Create and bind one SNIP to every VLAN, ensuring that each SNIP is in the subnet of the connected network.](#6--create-and-bind-one-snip-to-every-vlan-ensuring-that-each-snip-is-in-the-subnet-of-the-connected-network)
-    - [7.  Configure all of the routes that the ADC will require within System, Network, Routes.](#7--configure-all-of-the-routes-that-the-adc-will-require-within-system-network-routes)
-    - [8.  Create any Policy Based Routes required.](#8--create-any-policy-based-routes-required)
-    - [9.  Verify that you can ping each SNIP with MBF disabled or that you understand why you cannot.](#9--verify-that-you-can-ping-each-snip-with-mbf-disabled-or-that-you-understand-why-you-cannot)
-    - [10.  You have installed a new SSL certificate and key for the management GUI within Traffic Management, SSL, Certificates.](#10--you-have-installed-a-new-ssl-certificate-and-key-for-the-management-gui-within-traffic-management-ssl-certificates)
+    - [2. Unused physical interfaces should be disabled.](#2-unused-physical-interfaces-should-be-disabled)
+    - [3.  All redundant physical interfaces should be unmonitored for HA within System, Network, Interfaces.](#3--all-redundant-physical-interfaces-should-be-unmonitored-for-ha-within-system-network-interfaces)
+    - [4.  All channels comprising redundant physical interfaces should be monitored for HA within System, Network, Channels.](#4--all-channels-comprising-redundant-physical-interfaces-should-be-monitored-for-ha-within-system-network-channels)
+    - [5.  All channels are bound to a separate VLAN and, you have taken care that no untagged channels are accidentally still in VLAN 1.](#5--all-channels-are-bound-to-a-separate-vlan-and-you-have-taken-care-that-no-untagged-channels-are-accidentally-still-in-vlan-1)
+    - [6.  Create an HA pair between your ADCs within System, High Availability.](#6--create-an-ha-pair-between-your-adcs-within-system-high-availability)
+    - [7.  Create and bind one SNIP to every VLAN, ensuring that each SNIP is in the subnet of the connected network.](#7--create-and-bind-one-snip-to-every-vlan-ensuring-that-each-snip-is-in-the-subnet-of-the-connected-network)
+    - [8.  Configure all of the routes that the ADC will require within System, Network, Routes.](#8--configure-all-of-the-routes-that-the-adc-will-require-within-system-network-routes)
+    - [9.  Create any Policy Based Routes required.](#9--create-any-policy-based-routes-required)
+    - [10.  Verify that you can ping each SNIP with MBF disabled or that you understand why you cannot.](#10--verify-that-you-can-ping-each-snip-with-mbf-disabled-or-that-you-understand-why-you-cannot)
+    - [11.  You have installed a new SSL certificate and key for the management GUI within Traffic Management, SSL, Certificates.](#11--you-have-installed-a-new-ssl-certificate-and-key-for-the-management-gui-within-traffic-management-ssl-certificates)
   - [Base configuration settings](#base-configuration-settings)
     - [1.  Set the timezone and enable NTP.](#1--set-the-timezone-and-enable-ntp)
     - [2.  Create a Key Encryption Key.](#2--create-a-key-encryption-key)
@@ -104,7 +95,16 @@ In a virtualised or Cloud environment, your provider will likely have already co
 \
 &nbsp;
 
-### 2.  All redundant physical interfaces should be unmonitored for HA within System, Network, Interfaces.
+### 2. Unused physical interfaces should be disabled.
+\
+To prevent unused network interfaces from being connected to additional networks or devices accidentally or maliciously, you should disable any physical interfaces that you are not using.
+
+You can disable a physical interface by selecting System, Network, Interfaces. Then, by ticking the box adjacent to the interface, clicking "Select Action", followed by "Disable".
+
+\
+&nbsp;
+
+### 3.  All redundant physical interfaces should be unmonitored for HA within System, Network, Interfaces.
 \
 As each network has redundant connections, it is not usually desirable that the ADC initiates an HA failover when a single link fails. Instead, the ADC should continue to provide business services without interruption by using a surviving link and only trigger a failover to the secondary ADC node if all links become unavailable.
 
@@ -117,7 +117,7 @@ In a virtualised or Cloud environment, you will not have physical interfaces and
 \
 &nbsp;
 
-### 3.  All channels comprising redundant physical interfaces should be monitored for HA within System, Network, Channels.
+### 4.  All channels comprising redundant physical interfaces should be monitored for HA within System, Network, Channels.
 \
 The failure of all aggregated links connecting the ADC to a particular network will cause the channel representing those links to enter a failed/DOWN state.
 
@@ -128,7 +128,7 @@ To mark a channel as monitored, select System, Network, Channels. Then, select e
 \
 &nbsp;
 
-### 4.  All channels are bound to a separate VLAN and, you have taken care that no untagged channels are accidentally still in VLAN 1.
+### 5.  All channels are bound to a separate VLAN and, you have taken care that no untagged channels are accidentally still in VLAN 1.
 \
 Each redundant channel ordinarily represents the aggregate physical links connecting the ADC to a particular logical network.
 
@@ -144,7 +144,7 @@ You can find instructions to create VLANs here:
 \
 &nbsp;
 
-### 5.  Create an HA pair between your ADCs within System, High Availability.
+### 6.  Create an HA pair between your ADCs within System, High Availability.
 \
 You should deploy Citrix ADCs redundantly. You can achieve redundancy by implementing an HA pair of ADCs, creating a cluster of up to thirty-two nodes, or using a technology such as GSLB to split requests between instances. For a generic implementation, Citrix recommends the creation of a two-node HA pair.
 
@@ -154,7 +154,7 @@ You can find instructions for configuring an HA pair here:
 \
 &nbsp;
 
-### 6.  Create and bind one SNIP to every VLAN, ensuring that each SNIP is in the subnet of the connected network.
+### 7.  Create and bind one SNIP to every VLAN, ensuring that each SNIP is in the subnet of the connected network.
 \
 Citrix ADC will initiate communication from a Subnet IP (usually called a SNIP) with limited exceptions.
 
@@ -165,22 +165,25 @@ As each Subnet IP/SNIP includes a netmask, the ADC silently identifies any curre
 You can find instructions for configuring SNIPs here:
 <https://docs.citrix.com/en-us/citrix-adc/current-release/networking/ip-addressing/configuring-citrix-adc-owned-ip-addresses/configuring-subnet-ip-addresses-snips.html>
 
+>**Note:** SNIPs that should not host management services can be created without a management service enabled by appending the "-mgmtAccess DISABLED" parameter to the "add ns ip" command.
+
+
 \
 &nbsp;
 
-### 7.  Configure all of the routes that the ADC will require within System, Network, Routes.
+### 8.  Configure all of the routes that the ADC will require within System, Network, Routes.
 \
 If you have connected multiple logical networks, you will likely have routers in each. Therefore, you must now configure all the routes that the ADC will require to reach its clients and backend servers.
-
-Please note that the ADC has a single routing table for all interfaces.
 
 You can find instructions for configuring routes here:
 <https://docs.citrix.com/en-us/citrix-adc/current-release/networking/ip-routing/configuring-static-routes.html>
 
+>**Note:** The ADC has a single routing table that applies to all interfaces.
+
 \
 &nbsp;
 
-### 8.  Create any Policy Based Routes required.
+### 9.  Create any Policy Based Routes required.
 \
 Occasionally, it is impossible to configure a static route that allows for the behaviour you require.
 
@@ -201,7 +204,7 @@ apply pbrs
 \
 &nbsp;
 
-### 9.  Verify that you can ping each SNIP with MBF disabled or that you understand why you cannot.
+### 10.  Verify that you can ping each SNIP with MBF disabled or that you understand why you cannot.
 \
 Citrix ADC has a mode called Mac Based Forwarding (MBF) that causes it to ignore the routing table and instead send replies to the MAC address from which it received the traffic.
 
@@ -231,7 +234,7 @@ You can find more information of Mac Based Forwarding here:
 \
 &nbsp;
 
-### 10.  You have installed a new SSL certificate and key for the management GUI within Traffic Management, SSL, Certificates.
+### 11.  You have installed a new SSL certificate and key for the management GUI within Traffic Management, SSL, Certificates.
 \
 The Citrix ADC's default SSL certificate is not trusted and will cause your web browser to display a warning message when accessing the ADC's management services.
 
@@ -239,6 +242,8 @@ So that management users do not become accustomed to accepting warning messages 
 
 You can find details of how to replace the management SSL certificate here:
 <https://support.citrix.com/article/CTX122521>
+
+>**Note:** Citrix ADC shares the management SSL certificate between HA nodes and, you should use a replacement certificate trusted for all FQDNs used for management purposes. Usually, this means having a SAN certificate containing the FQDN of both HA nodes.
 
 \
 &nbsp;
@@ -262,6 +267,17 @@ The command to add NTP servers and enable time synchronization is:
 ```
 add ntp server pool.ntp.org
 enable ntp sync
+```
+
+After enabling time synchronization, you can view the NTP status to verify functionality by using the following command:
+```
+nsroot@StevensADC-Primary> show ntp status
+
+     remote           refid      st t when poll reach   delay   offset  jitter
+==============================================================================
+*any.time.nl     85.199.214.99    2 u  113 1024  377   21.138   +0.762   0.654
+ Done
+ nsroot@StevensADC-Primary>
 ```
 
 You can find details of how to the timezone using the ADC's GUI here:
@@ -390,7 +406,7 @@ set ssl service nshttps-127.0.0.1-443 -ssl3 disabled -tls1 disabled
 
 ### 10.  Set generic modes and features.
 \
-Citrix ADC has Layer 3 mode enabled by default. Layer 3 mode causes the ADC to act as a router and should usually be disabled.
+Citrix ADC has Layer 3 mode enabled by default. Layer 3 mode causes the ADC to act as a router and should usually be disabled. Edge mode causes the ADC to dynamically learn details about backend servers when used in a configuration such as link load balancing.
 
 ```
 disable ns mode l3 edge
@@ -415,21 +431,36 @@ You can find more details about modes and features here:
 \
 The Citrix ADC needs to have access to one or more nameservers for DNS resolution. As the Citrix ADC checks if the DNS servers are online using ICMP, it is usual to implement a local load balancing vServer both to distribute load and to allow DNS based monitoring.
 
+As DNS can use UDP or TCP, we will create one load balancing vServer for each protocol.
+
 You should configure nameservers using the following commands:
 
 ```
-add lb vserver DNS DNS 0.0.0.0 0 -persistenceType NONE -cltTimeout 120
+add lb vserver DNS_UDP DNS 0.0.0.0 0 -persistenceType NONE -cltTimeout 120
 
-add serviceGroup DNSSVG DNS -maxClient 0 -maxReq 0 -cip DISABLED -usip NO -useproxyport NO -cltTimeout 120 -svrTimeout 120 -CKA NO -TCPB NO -CMP NO
-bind lb vserver DNS DNSSVG
+add serviceGroup DNS_UDP_SVG DNS -maxClient 0 -maxReq 0 -cip DISABLED -usip NO -useproxyport NO -cltTimeout 120 -svrTimeout 120 -CKA NO -TCPB NO -CMP NO
+bind lb vserver DNS_UDP DNS_UDP_SVG
 
-add lb monitor DNS-monitor DNS -query . -queryType Address -LRTM DISABLED -interval 6 -resptimeout 3 -downTime 20 -destPort 53
-bind serviceGroup DNSSVG -monitorName DNS-monitor
+add lb monitor DNS_UDP_monitor DNS -query . -queryType Address -LRTM DISABLED -interval 6 -resptimeout 3 -downTime 20 -destPort 53
+bind serviceGroup DNS_UDP_SVG -monitorName DNS_UDP_monitor
 
-bind serviceGroup DNSSVG <DNSSERVERIP1> 53
-bind serviceGroup DNSSVG <DNSSERVERIP2> 53
+bind serviceGroup DNS_UDP_SVG <DNSSERVERIP1> 53
+bind serviceGroup DNS_UDP_SVG <DNSSERVERIP2> 53
 
-add dns nameserver DNS
+
+add lb vserver DNS_TCP DNS_TCP 0.0.0.0 0 -persistenceType NONE -cltTimeout 120
+
+add serviceGroup DNS_TCP_SVG DNS_TCP -maxClient 0 -maxReq 0 -cip DISABLED -usip NO -useproxyport NO -cltTimeout 120 -svrTimeout 120 -CKA NO -TCPB NO -CMP NO
+bind lb vserver DNS_TCP DNS_TCP_SVG
+
+add lb monitor DNS_TCP_monitor DNS-TCP -query . -queryType Address -LRTM DISABLED -interval 6 -resptimeout 3 -downTime 20 -destPort 53
+bind serviceGroup DNS_TCP_SVG -monitorName DNS_TCP_monitor
+
+bind serviceGroup DNS_TCP_SVG <DNSSERVERIP1> 53
+bind serviceGroup DNS_TCP_SVG <DNSSERVERIP2> 53
+
+add dns nameServer DNS_UDP -type UDP
+add dns nameServer DNS_TCP -type TCP
 ```
 
 \
@@ -490,11 +521,13 @@ You can find more details on configuring SNMP here:
 It is usually helpful for the ADC to raise alerts when high CPU or memory usage occurs and send these via SNMP trap configuration to your SNMP server. You can implement such configuration with the following commands:
 
 ```
-set snmp alarm CPU-USAGE -state ENABLED -normalValue 35 -thresholdValue 95 -logging ENABLED -severity Informational
-set snmp alarm MEMORY -state ENABLED -normalValue 35 -thresholdValue 95 -logging ENABLED -severity Critical
+set snmp alarm CPU-USAGE -state ENABLED -normalValue 35 -thresholdValue 80 -logging ENABLED -severity Informational
+set snmp alarm MEMORY -state ENABLED -normalValue 35 -thresholdValue 80 -logging ENABLED -severity Critical
 
 add snmp trap generic SNMPTRAPDSTIP -communityName public
 ```
+
+>**Note:** Once your ADC platform has been running for some time, Citrix recommends that you consider periodically reviewing threshold values to ensure that the ADC alerts on abnormal behaviour that you may wish to investigate.
 
 \
 &nbsp;
@@ -528,6 +561,10 @@ As an administrator may have SSH sessions open to multiple ADCs simultaneously, 
 set system parameter -promptString %u@%h-%s
 ```
 
+After executing the above command, the prompt will be rendered as:
+```
+nsroot@hostname-Primary> 
+```
 \
 &nbsp;
 
